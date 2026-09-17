@@ -1,8 +1,49 @@
 import os
+import sys
+import shutil
 import argparse
 import imageio.v2 as imageio
 import numpy as np
 from PIL import Image
+
+# 修复 Windows 控制台中文乱码：强制以 UTF-8 输出
+if sys.stdout is not None and hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if sys.stderr is not None and hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
+
+def clear_output_folder(output_folder):
+    """
+    清空输出文件夹中的所有内容（文件与子文件夹）
+
+    Args:
+        output_folder: 输出文件夹路径
+
+    Returns:
+        int: 删除的顶层条目数量；若路径不存在或不安全则返回 0
+    """
+    if not os.path.isdir(output_folder):
+        return 0
+
+    # 安全保护：拒绝驱动器根目录等危险路径，避免误删
+    abs_out = os.path.abspath(output_folder)
+    if os.path.dirname(abs_out) == abs_out:
+        print(f"警告：输出路径为磁盘根目录，已跳过清空：{abs_out}")
+        return 0
+
+    removed = 0
+    for name in os.listdir(output_folder):
+        target = os.path.join(output_folder, name)
+        try:
+            if os.path.isdir(target):
+                shutil.rmtree(target)
+            else:
+                os.remove(target)
+            removed += 1
+        except Exception as e:
+            print(f"清理 '{name}' 失败: {str(e)}")
+    return removed
 
 def process_files(input_folder, output_folder, flip_y):
     """
@@ -78,19 +119,27 @@ def main():
     parser.add_argument('-i', '--input', default='path/input', help='输入文件夹路径 (默认: path/input)')
     parser.add_argument('-o', '--output', default='path/output', help='输出文件夹路径 (默认: path/output)')
     parser.add_argument('-f', '--flip', action='store_true', help='是否翻转Y轴')
-    
+    parser.add_argument('--no-clean', action='store_true', help='保留输出文件夹中的已有文件（默认每次运行前清空）')
+
     args = parser.parse_args()
-    
+
     # 使用固定的默认路径
     input_folder = args.input  # 默认为 'path/input'
     output_folder = args.output  # 默认为 'path/output'
-    
+
     print("===== DDS/HDR 转换器 =====")
     print(f"输入文件夹: {input_folder}")
     print(f"输出文件夹: {output_folder}")
     print(f"翻转Y轴: {'是' if args.flip else '否'}")
     print("========================")
-    
+
+    # 运行前清空输出文件夹，避免残留旧文件
+    if args.no_clean:
+        print("已跳过清空输出文件夹 (--no-clean)")
+    else:
+        removed = clear_output_folder(output_folder)
+        print(f"已清空输出文件夹: 删除 {removed} 个旧文件")
+
     # 处理文件
     converted_files, failed_files = process_files(input_folder, output_folder, args.flip)
     

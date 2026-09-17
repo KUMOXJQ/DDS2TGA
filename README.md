@@ -8,6 +8,7 @@
 - **HDR 转 PNG**: 将高动态范围 (.hdr) 图像转换为 PNG 格式，支持色调映射
 - **批量转换**: 支持文件夹内所有文件的批量处理
 - **Y轴翻转**: 可选的 Y轴翻转功能
+- **自动清理**: 每次运行前自动清空输出文件夹，避免残留旧文件造成混淆
 - **命令行界面**: 灵活的命令行参数配置
 
 ## 安装依赖
@@ -29,11 +30,12 @@ python converter.py -i path/input -o path/output
 - `-i, --input`: 输入文件夹路径 (默认: path/input)
 - `-o, --output`: 输出文件夹路径 (默认: path/output)  
 - `-f, --flip`: 是否翻转Y轴
+- `--no-clean`: 保留输出文件夹中已有的文件（默认每次运行前会清空输出文件夹）
 
 #### 使用示例
 
 ```bash
-# 基础转换
+# 基础转换（运行前自动清空输出文件夹）
 python converter.py
 
 # 指定输入输出路径
@@ -41,6 +43,9 @@ python converter.py -i ./images -o ./converted
 
 # 启用Y轴翻转
 python converter.py -i ./images -o ./converted -f
+
+# 保留输出文件夹中的已有文件，不做清空
+python converter.py -i ./images -o ./converted --no-clean
 ```
 
 ### 方法2: 单独使用转换脚本
@@ -115,3 +120,5 @@ HDR (高动态范围) 图像转换时会进行以下处理：
 - 输出文件夹会自动创建
 - 转换过程中会显示详细的进度信息
 - 建议使用 `converter.py` 获得最佳的使用体验
+- **默认每次运行前会清空输出文件夹**，如需保留已有文件请加 `--no-clean` 参数
+- 为防误删，程序会拒绝将磁盘根目录（如 `F:\`）作为输出路径进行清空
